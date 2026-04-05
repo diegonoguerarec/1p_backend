@@ -31,7 +31,7 @@ public class Camion {
 
     // Para indicar borrado lógico
     @ColumnDefault("False")
-    private boolean borrado;
+    private Boolean borrado;
 
     // Getters and Setters
 
@@ -81,5 +81,13 @@ public class Camion {
 
     public void setAnio_fabricacion(int anio_fabricacion) {
         this.anio_fabricacion = anio_fabricacion;
+    }
+
+    public Boolean getBorrado() {
+        return borrado;
+    }
+
+    public void setBorrado(Boolean borrado) {
+        this.borrado = borrado;
     }
 }
