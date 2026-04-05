@@ -31,7 +31,7 @@ public class Camion {
 
     // Para indicar borrado lógico
     @ColumnDefault("False")
-    private Boolean borrado;
+    private boolean borrado;
 
     // Getters and Setters
 

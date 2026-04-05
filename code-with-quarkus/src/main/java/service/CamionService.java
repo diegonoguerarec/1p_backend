@@ -15,4 +15,16 @@ public class CamionService {
     public void crear (Camion camion) {
         em.persist(camion);
     }
+    
+    @Transactional
+    public boolean borrarLogico (Long id) {
+        Camion camion = em.find(Camion.class, id);
+
+        if (camion == null) {return false;} else {
+            camion.setBorrado(true);
+            return true;
+        }
+
+
+    }
 }
