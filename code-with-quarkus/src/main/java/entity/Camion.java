@@ -1,6 +1,12 @@
 package entity;
 
+import org.hibernate.annotations.ColumnDefault;
+
+import io.smallrye.common.constraint.NotNull;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 
 @Entity
 public class Camion {
@@ -8,15 +14,24 @@ public class Camion {
     @GeneratedValue
     private Long id;
 
+    @Column(unique = true)
     private String chapa;
 
-    private double capacidad;
+    @NotNull
+    @Positive
+    private double capacidad_kg;
 
     private String marca;
 
     private String modelo;
 
+    @Min(value = 2000)
+    @Max(value = 2026)
     private int anio_fabricacion;
+
+    // Para indicar borrado lógico
+    @ColumnDefault("False")
+    private boolean borrado;
 
     // Getters and Setters
 
@@ -37,11 +52,11 @@ public class Camion {
     }
 
     public void setCapacidad(double capacidad) {
-        this.capacidad = capacidad;
+        this.capacidad_kg = capacidad;
     }
 
     public double getCapacidad() {
-        return capacidad;
+        return capacidad_kg;
     }
 
     public String getMarca() {
