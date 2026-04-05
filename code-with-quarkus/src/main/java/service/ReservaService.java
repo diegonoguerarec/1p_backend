@@ -76,4 +76,22 @@ public class ReservaService {
         
         LOG.infof("Reserva creada camion=%d desde=%s hasta=%s", camion_id, desde, hasta);
     }
+
+    @Transactional
+    public void cancelar (Long id) {
+        Reserva reserva = em.find(Reserva.class, id);
+        if (reserva == null) {
+            LOG.warnf("La reserva no existe");
+            throw new BadRequestException("La reserva especificada no existe");
+        }
+
+        if (reserva.getEstado().equals("FINALIZADA")) {
+            LOG.warnf("No se puede cancelar una reserva finalizada");
+            throw new BadRequestException("No se puede cancelar una reserva finalizada");
+        }
+
+        reserva.setEstado("CANCELADA");
+        em.merge(reserva);
+        LOG.infof("Reserva cancelada id=%d", id);
+    }
 }
