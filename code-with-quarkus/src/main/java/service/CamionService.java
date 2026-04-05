@@ -1,5 +1,6 @@
 package service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import entity.Camion;
@@ -58,5 +59,17 @@ public class CamionService {
 
         // El camion existe y no está borrado
         return c;
+    }
+
+    public List<Camion> camionesDisponiblesPorFechayVolumen (LocalDate fecha_desde, LocalDate fecha_hasta, double volumen) {
+        return em.createQuery(
+            "SELECT c FROM Camion c WHERE c.borrado = false AND c.id NOT IN (" +
+            "SELECT r.camion.id FROM Reserva r WHERE " +
+            "(r.fecha_desde <= :fecha_hasta AND r.fecha_hasta >= :fecha_desde) AND r.estado IN ('PENDIENTE', 'APROBADO')" +
+            ") AND c.capacidad_kg >= :volumen", Camion.class)
+            .setParameter("fecha_desde", fecha_desde)
+            .setParameter("fecha_hasta", fecha_hasta)
+            .setParameter("volumen", volumen)
+            .getResultList();
     }
 }

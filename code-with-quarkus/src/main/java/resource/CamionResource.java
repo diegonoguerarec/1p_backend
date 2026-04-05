@@ -12,6 +12,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import service.CamionService;
@@ -69,5 +70,21 @@ public class CamionResource {
         } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+    }
+
+    @GET
+    @Path("/libres")
+    public Response camionesLibresPorFecha (
+        @QueryParam("fecha_desde") String fecha_desde,
+        @QueryParam("fecha_hasta") String fecha_hasta,
+        @QueryParam("volumen") double volumen
+    ) {
+        List<Camion> camionesLibres = service.camionesDisponiblesPorFechayVolumen(
+            java.time.LocalDate.parse(fecha_desde),
+            java.time.LocalDate.parse(fecha_hasta),
+            volumen
+        );
+
+        return Response.ok(camionesLibres).build();
     }
 }
