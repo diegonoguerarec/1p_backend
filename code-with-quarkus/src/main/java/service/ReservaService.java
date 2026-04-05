@@ -48,8 +48,17 @@ public class ReservaService {
         // Validar que el camion no tenga otras reservas en ese rango de fecha
         // Si tiene una reserva PENDIENTE o APROBADA no se puede crear la reserva
         // Si tiene una reserva CANCELADA se puede crear
-        // Siempre se crea una en estado pendiente
+        Long conflictos = em.createQuery("SELECT COUNT(r) FROM Reserva r WHERE r.camion.id = :camionId AND r.estado IN ('PENDIENTE', 'APROBADA') AND r.fecha_desde <= :hasta AND r.fecha_hasta >= :desde", Long.class)
+            .setParameter("camionId", camion_id)
+            .setParameter("desde", desde)
+            .setParameter("hasta", hasta).
+            getSingleResult();
 
+        if (conflictos > 0) {
+            return false;// Ya hay una reserva que se solapa
+        }
+
+        // Siempre se crea una en estado pendiente
         reserva.setEstado("PENDIENTE");
 
         reserva.setCamion(camion);
