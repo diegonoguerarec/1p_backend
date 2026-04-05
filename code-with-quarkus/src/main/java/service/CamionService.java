@@ -28,6 +28,20 @@ public class CamionService {
         }
     }
 
+    @Transactional
+    public boolean actualizar (Long id, Camion camionActualizado) {
+        Camion camion = em.find(Camion.class, id);
+
+        if (camion == null) {return false;} else /*No se encontró un camion con esa id*/{
+            camion.setChapa(camionActualizado.getChapa());
+            camion.setCapacidad(camionActualizado.getCapacidad());
+            camion.setMarca(camionActualizado.getMarca());
+            camion.setModelo(camionActualizado.getModelo());
+            camion.setAnio_fabricacion(camionActualizado.getAnio_fabricacion());
+            return true;
+        }
+    }
+
     public List<Camion> listarActivos () {
         return em.createQuery("SELECT c FROM Camion c WHERE c.borrado = false", Camion.class)
             .getResultList();
