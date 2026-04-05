@@ -28,13 +28,8 @@ public class ReservaResource {
 
     @POST
     public Response crear (Reserva reserva) {
-        boolean ok = service.crear(reserva);
+        service.crear(reserva);
 
-        if (ok) {
-            return Response.status(Response.Status.CREATED).build();
-        } else {
-            // No se pudo crear por alguna razón
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
+        return Response.status(Response.Status.CREATED).build();
     }
 }

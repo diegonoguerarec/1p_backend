@@ -2,6 +2,7 @@ package service;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.jboss.logging.Logger;
 
 import entity.Camion;
 import entity.Reserva;
@@ -9,11 +10,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 
 @ApplicationScoped
 public class ReservaService {
     @Inject
     EntityManager em;
+
+    private static final Logger LOG = Logger.getLogger(ReservaService.class);
 
     // Lista todas las reservas
     public List<Reserva> listar () {
@@ -22,7 +26,7 @@ public class ReservaService {
     }
 
     @Transactional
-    public boolean crear (Reserva reserva) {
+    public void crear (Reserva reserva) {
         // Validaciones y creacion o error
 
         Long camion_id = reserva.getCamion().getId();
@@ -30,11 +34,14 @@ public class ReservaService {
 
         // Validaciones sobre el camion de la reserva
         if (camion == null) {
-            return false;// Camion no existe
+            LOG.warnf("El camión no existe");
+            throw new BadRequestException("El camión especificado no existe");
         } else if (camion.getBorrado() == true) {
-            return false;// Camion borrado
+            LOG.warnf("El camión está borrado");
+            throw new BadRequestException("El camión especificado está borrado");
         } else if (camion.getCapacidad() < reserva.getVolumen_de_transporte()) {
-            return false;// Capacidad del camion insuficiente
+            LOG.warnf("La capacidad del camión es insuficiente");
+            throw new BadRequestException("La capacidad del camión es insuficiente");
         }
 
         //Validar que las fechas no sean incorrectas
@@ -42,7 +49,8 @@ public class ReservaService {
         LocalDate hasta = reserva.getFecha_hasta();
 
         if (!desde.isBefore(hasta)) {
-            return false;// fecha_desde es igual o mayor que fecha_hasta
+            LOG.warnf("Las fechas de la reserva son incorrectas");
+            throw new BadRequestException("Las fechas de la reserva son incorrectas");
         }
 
         // Validar que el camion no tenga otras reservas en ese rango de fecha
@@ -55,7 +63,8 @@ public class ReservaService {
             getSingleResult();
 
         if (conflictos > 0) {
-            return false;// Ya hay una reserva que se solapa
+            LOG.warnf("Ya hay una reserva que se solapa");
+            throw new BadRequestException("Ya hay una reserva que se solapa");
         }
 
         // Siempre se crea una en estado pendiente
@@ -64,6 +73,7 @@ public class ReservaService {
         reserva.setCamion(camion);
 
         em.persist(reserva);
-        return true;
+        
+        LOG.infof("Reserva creada camion=%d desde=%s hasta=%s", camion_id, desde, hasta);
     }
 }
