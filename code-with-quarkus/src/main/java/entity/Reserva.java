@@ -96,4 +96,12 @@ public class Reserva {
     public void setEstado(String estado) {
         this.estado = estado;
     }
+
+    public Camion getCamion() {
+        return camion;
+    }
+
+    public void setCamion(Camion camion) {
+        this.camion = camion;
+    }
 }
