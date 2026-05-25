@@ -14,3 +14,19 @@ Luego para apagarlo y prenderlo respectivamente:
     docker stop db_estacionamiento
     docker start db_estacionamiento
 ```
+
+## Iniciar la app
+Activar venv (recomendado)
+```
+    source venv/bin/activate
+```
+
+Instalar dependencias
+```
+    pip install -r requirements.txt
+```
+
+Iniciar la app
+```
+    uvicorn main:app --reload
+```

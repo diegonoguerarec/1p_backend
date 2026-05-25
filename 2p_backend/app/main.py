@@ -13,7 +13,7 @@ from .schemas import Espacio, EspacioUpdate
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # En proyectos reales, esto se reemplaza por migraciones (Alembic).
+    ## Se puede reemplazar por migraciones
     Base.metadata.create_all(bind=engine)
     yield
 
