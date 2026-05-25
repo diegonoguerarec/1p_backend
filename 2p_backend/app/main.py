@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from datetime import datetime, timedelta
-from sqlalchemy import select, func
+from sqlalchemy import select, func, exists
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -143,6 +143,39 @@ def listar_usos_espacio(
         stmt = stmt.where(UsoEspacioModel.estado == estado)
 
     stmt = stmt.order_by(UsoEspacioModel.inicio.desc())
+    return db.scalars(stmt).all()
+
+@app.get("/espacios/disponibles", response_model=List[Espacio])
+def listar_espacios_disponibles(
+    inicio: datetime,
+    fin: datetime,
+    db: Session = Depends(get_db),
+):
+    if fin <= inicio:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El parámetro fin debe ser mayor que inicio",
+        )
+
+    uso_fin = UsoEspacioModel.inicio + func.make_interval(
+        0, 0, 0, 0, UsoEspacioModel.duracion, 0, 0
+    )
+
+    ocupado = exists(
+        select(1).where(
+            UsoEspacioModel.espacio_calle == EspacioModel.calle,
+            UsoEspacioModel.espacio_numero == EspacioModel.numero,
+            UsoEspacioModel.estado == UsoEspacioEstadoModel.RESERVADO,
+            UsoEspacioModel.inicio < fin,
+            uso_fin > inicio,
+        )
+    )
+
+    stmt = (
+        select(EspacioModel)
+        .where(~ocupado)
+        .order_by(EspacioModel.calle, EspacioModel.numero)
+    )
     return db.scalars(stmt).all()
 
 @app.put("/usos-espacio/{uso_id}/finalizar", response_model=UsoEspacio)
