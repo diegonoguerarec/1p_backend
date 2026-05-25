@@ -2,7 +2,8 @@ from contextlib import asynccontextmanager
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from sqlalchemy import select
+from datetime import datetime, timedelta
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -86,6 +87,30 @@ def crear_uso_espacio(payload: UsoEspacioCreate, db: Session = Depends(get_db)):
     if espacio is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Espacio no encontrado")
 
+    # Validación para evitar solapamientos
+    existing_fin = UsoEspacioModel.inicio + func.make_interval(
+    0, 0, 0, 0, UsoEspacioModel.duracion, 0, 0
+    )
+
+    stmt = (
+        select(UsoEspacioModel.id)
+        .where(
+            UsoEspacioModel.espacio_calle == payload.espacio_calle,
+            UsoEspacioModel.espacio_numero == payload.espacio_numero,
+            UsoEspacioModel.estado == UsoEspacioEstadoModel.RESERVADO,
+            UsoEspacioModel.inicio < existing_fin,
+            existing_fin > payload.inicio,
+        )
+        .limit(1)
+    )
+
+    conflicto_id = db.execute(stmt).scalar_one_or_none()
+    if conflicto_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El espacio ya está reservado en ese horario",
+        )
+
     uso = UsoEspacioModel(
         espacio_calle=payload.espacio_calle,
         espacio_numero=payload.espacio_numero,
@@ -98,6 +123,13 @@ def crear_uso_espacio(payload: UsoEspacioCreate, db: Session = Depends(get_db)):
     db.add(uso)
     db.commit()
     db.refresh(uso)
+    return uso
+
+@app.get("/usos-espacio/{uso_id}", response_model=UsoEspacio)
+def obtener_uso_espacio(uso_id: int, db: Session = Depends(get_db)):
+    uso = db.get(UsoEspacioModel, uso_id)
+    if uso is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No encontrado")
     return uso
 
 @app.get("/usos-espacio", response_model=List[UsoEspacio])
