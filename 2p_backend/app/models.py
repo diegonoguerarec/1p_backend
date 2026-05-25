@@ -34,7 +34,6 @@ class UsoEspacio(Base):
         ),
     )
 
-    # relación ORM (opcional, pero útil)
     espacio: Mapped["Espacio"] = relationship("Espacio")
 
     chapa: Mapped[str] = mapped_column(String(20), nullable=False)

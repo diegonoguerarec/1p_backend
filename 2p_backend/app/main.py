@@ -82,7 +82,7 @@ def borrar_espacio(calle: str, numero: int, db: Session = Depends(get_db)):
 # Endpoints para Usos de Espacio
 @app.post("/usos-espacio", response_model=UsoEspacio, status_code=status.HTTP_201_CREATED)
 def crear_uso_espacio(payload: UsoEspacioCreate, db: Session = Depends(get_db)):
-    # validar que el Espacio exista (así evitás IntegrityError por FK)
+    # validar que el Espacio exista
     espacio = db.get(EspacioModel, {"calle": payload.espacio_calle, "numero": payload.espacio_numero})
     if espacio is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Espacio no encontrado")
@@ -117,7 +117,7 @@ def crear_uso_espacio(payload: UsoEspacioCreate, db: Session = Depends(get_db)):
         chapa=payload.chapa,
         inicio=payload.inicio,
         duracion=payload.duracion,
-        estado=UsoEspacioEstadoModel.RESERVADO,  # fuerza default según el enunciado
+        estado=UsoEspacioEstadoModel.RESERVADO,
     )
 
     db.add(uso)
