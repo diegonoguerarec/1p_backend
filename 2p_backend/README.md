@@ -35,10 +35,10 @@ Iniciar la app
 
 Se tiene una tabla de Espacios que representa cada espacio disponible. Tiene una PK compuesta por la calle y el número del espacio. La tabla UsoEspacio hace referencia a la tabla espacios y representa una reserva, contiene la chapa del vehiculo, un tiempo de inicio y duración.
 
-![Diagrama de Tablas](image.png)
+![Diagrama de Tablas](/2p_backend/img/image.png)
 
 ## Endpoints disponibles
 
-![Lista de Endpoints](image-1.png)
+![Lista de Endpoints](/2p_backend/img/image-1.png)
 
 Para consultar el swagger dirigirse a localhost:8000/docs con el proyecto corriendo.
