@@ -30,3 +30,15 @@ Iniciar la app
 ```
     uvicorn main:app --reload
 ```
+
+## Modelo de datos
+
+Se tiene una tabla de Espacios que representa cada espacio disponible. Tiene una PK compuesta por la calle y el número del espacio. La tabla UsoEspacio hace referencia a la tabla espacios y representa una reserva, contiene la chapa del vehiculo, un tiempo de inicio y duración.
+
+![Diagrama de Tablas](image.png)
+
+## Endpoints disponibles
+
+![Lista de Endpoints](image-1.png)
+
+Para consultar el swagger dirigirse a localhost:8000/docs con el proyecto corriendo.
