@@ -1,6 +1,8 @@
 from pydantic import BaseModel, ConfigDict, Field
 import enum
 from datetime import datetime
+
+from .models import UsoEspacioEstado
 # Modelos para serializar datos de entrada y salida de la API
 
 class Espacio(BaseModel):
@@ -13,10 +15,6 @@ class Espacio(BaseModel):
 
 class EspacioUpdate(BaseModel):
     obs: str
-
-class UsoEspacioEstado(str, enum.Enum):
-    RESERVADO = "RESERVADO"
-    FINALIZADO = "FINALIZADO"
 
 class UsoEspacioCreate(BaseModel):
     espacio_calle: str
