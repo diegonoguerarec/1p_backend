@@ -2,15 +2,25 @@ from contextlib import asynccontextmanager
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, func, exists
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from .db import Base, engine, get_db
 from .models import Espacio as EspacioModel
 from .models import UsoEspacio as UsoEspacioModel, UsoEspacioEstado as UsoEspacioEstadoModel
-from .schemas import Espacio, EspacioUpdate, UsoEspacio, UsoEspacioCreate
+from .schemas import (
+    Espacio,
+    EspacioUpdate,
+    UsoEspacio,
+    UsoEspacioCreate,
+    BoletaCreate,
+    BoletaResponse,
+    BoletaDetalleItem,
+    BoletaCabecera,
+    BoletaEspacioUsado,
+)
 
 
 @asynccontextmanager
@@ -21,6 +31,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+MONTO_POR_HORA = 10
 
 @app.post("/espacios", response_model=Espacio, status_code=status.HTTP_201_CREATED)
 def crear_espacio(payload: Espacio, db: Session = Depends(get_db)):
@@ -194,3 +206,56 @@ def finalizar_uso_espacio(uso_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(uso)
     return uso
+
+@app.post("/generar-boleta", response_model=BoletaResponse)
+def generar_boleta(payload: BoletaCreate, db: Session = Depends(get_db)):
+    if payload.fecha_fin <= payload.fecha_inicio:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La fecha_fin debe ser mayor que la fecha_inicio",
+        )
+
+    # Se incluye cualquier uso que se solape con el rango solicitado.
+    uso_fin_expr = UsoEspacioModel.inicio + func.make_interval(
+        0, 0, 0, 0, UsoEspacioModel.duracion, 0, 0
+    )
+
+    stmt = (
+        select(UsoEspacioModel)
+        .options(joinedload(UsoEspacioModel.espacio))
+        .where(
+            UsoEspacioModel.chapa == payload.chapa,
+            UsoEspacioModel.estado == UsoEspacioEstadoModel.FINALIZADO,
+            UsoEspacioModel.inicio < payload.fecha_fin,
+            uso_fin_expr > payload.fecha_inicio,
+        )
+        .order_by(UsoEspacioModel.inicio.asc())
+    )
+
+    usos = db.scalars(stmt).all()
+
+    detalle: list[BoletaDetalleItem] = []
+    for uso in usos:
+        fin = uso.inicio + timedelta(hours=uso.duracion)
+        total = int(uso.duracion) * MONTO_POR_HORA
+        detalle.append(
+            BoletaDetalleItem(
+                espacio_usado=BoletaEspacioUsado(
+                    calle=uso.espacio_calle,
+                    numero=uso.espacio_numero,
+                ),
+                fecha_hora_inicio=uso.inicio,
+                fecha_hora_finalizacion=fin,
+                cantidad_horas_utilizadas=int(uso.duracion),
+                monto_por_hora=MONTO_POR_HORA,
+                total_a_pagar=total,
+            )
+        )
+
+    return BoletaResponse(
+        cabecera=BoletaCabecera(
+            fecha_emision=datetime.now(tz=timezone.utc),
+            chapa=payload.chapa,
+        ),
+        detalle=detalle,
+    )
