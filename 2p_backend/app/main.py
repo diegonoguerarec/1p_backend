@@ -235,9 +235,11 @@ def generar_boleta(payload: BoletaCreate, db: Session = Depends(get_db)):
     usos = db.scalars(stmt).all()
 
     detalle: list[BoletaDetalleItem] = []
+    total_boleta = 0
     for uso in usos:
         fin = uso.inicio + timedelta(hours=uso.duracion)
         total = int(uso.duracion) * MONTO_POR_HORA
+        total_boleta += total
         detalle.append(
             BoletaDetalleItem(
                 espacio_usado=BoletaEspacioUsado(
@@ -256,6 +258,7 @@ def generar_boleta(payload: BoletaCreate, db: Session = Depends(get_db)):
         cabecera=BoletaCabecera(
             fecha_emision=datetime.now(tz=timezone.utc),
             chapa=payload.chapa,
+            total_a_pagar=total_boleta,
         ),
         detalle=detalle,
     )

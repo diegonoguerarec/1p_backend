@@ -42,6 +42,7 @@ class BoletaCreate(BaseModel):
 class BoletaCabecera(BaseModel):
     fecha_emision: datetime
     chapa: str
+    total_a_pagar: int
 
 
 class BoletaEspacioUsado(BaseModel):
