@@ -254,11 +254,41 @@ def generar_boleta(payload: BoletaCreate, db: Session = Depends(get_db)):
             )
         )
 
+    fecha_emision = datetime.now(tz=timezone.utc)
+    lineas = [
+        f"Boleta - {payload.chapa}",
+        "",
+        f"Fecha de emisión: {fecha_emision.isoformat()}",
+        f"Chapa: {payload.chapa}",
+        "",
+        "Detalles:",
+    ]
+
+    if not detalle:
+        lineas.append("(Sin usos finalizados en el rango indicado)")
+    else:
+        for i, item in enumerate(detalle, start=1):
+            lineas.extend(
+                [
+                    f"{i}) Espacio: {item.espacio_usado.calle} {item.espacio_usado.numero}",
+                    f"   Inicio: {item.fecha_hora_inicio.isoformat()}",
+                    f"   Fin: {item.fecha_hora_finalizacion.isoformat()}",
+                    f"   Horas: {item.cantidad_horas_utilizadas}",
+                    f"   Monto por hora: {item.monto_por_hora}",
+                    f"   Total: {item.total_a_pagar}",
+                    "",
+                ]
+            )
+
+    lineas.extend([f"Total a pagar: {total_boleta}", "", "Saludos."])
+    correo = "\n".join(lineas)
+
     return BoletaResponse(
         cabecera=BoletaCabecera(
-            fecha_emision=datetime.now(tz=timezone.utc),
+            fecha_emision=fecha_emision,
             chapa=payload.chapa,
             total_a_pagar=total_boleta,
         ),
         detalle=detalle,
+        correo=correo,
     )

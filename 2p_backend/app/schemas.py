@@ -62,3 +62,4 @@ class BoletaDetalleItem(BaseModel):
 class BoletaResponse(BaseModel):
     cabecera: BoletaCabecera
     detalle: list[BoletaDetalleItem]
+    correo: str
